@@ -23,10 +23,16 @@ class Settings(BaseSettings):
     TELEGRAM_RETRY_ATTEMPTS: int = Field(default=5, description="Max reconnection attempts on Telegram error")
     TELEGRAM_RETRY_DELAY: float = Field(default=3.0, description="Base retry delay in seconds for backoff")
 
+    # Persistent Storage & Data Directory
+    DATA_DIR: str = Field(
+        default="./data",
+        description="Directory for persistent data (SQLite database, Telegram sessions)"
+    )
+
     # Database Configuration
-    DATABASE_URL: str = Field(
-        default="sqlite+aiosqlite:///./paper_trading.db",
-        description="Async database connection URL"
+    DATABASE_URL: Optional[str] = Field(
+        default=None,
+        description="Async database connection URL. If omitted, uses SQLite inside DATA_DIR."
     )
 
     # Market Data Configuration
@@ -124,6 +130,17 @@ class Settings(BaseSettings):
             # Comma-separated fallback
             return [float(x.strip()) for x in v.split(",") if x.strip()]
         return v
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def resolve_database_url(cls, v: Optional[str], info) -> str:
+        if v and str(v).strip():
+            return str(v).strip()
+        data_dir = info.data.get("DATA_DIR", "./data") if hasattr(info, "data") else "./data"
+        import os
+        os.makedirs(data_dir, exist_ok=True)
+        clean_dir = os.path.normpath(data_dir).replace("\\", "/")
+        return f"sqlite+aiosqlite:///{clean_dir}/paper_trading.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -31,16 +31,29 @@ class TelegramListenerService:
     def __init__(self):
         self.api_id: Optional[int] = settings.TELEGRAM_API_ID
         self.api_hash: Optional[str] = settings.TELEGRAM_API_HASH
-        self.session_name: str = settings.TELEGRAM_SESSION
+        self.raw_session: str = settings.TELEGRAM_SESSION
         self.source_chat_id: Optional[str] = settings.TELEGRAM_SOURCE_CHAT_ID
         self.phone: Optional[str] = settings.TELEGRAM_PHONE
         self.bot_token: Optional[str] = settings.TELEGRAM_BOT_TOKEN
         self.mock_mode: bool = settings.TELEGRAM_MOCK_MODE
 
+        self.session_path: str = self._resolve_session_path(self.raw_session, settings.DATA_DIR)
+        self.session_name: str = self.raw_session
+
         self.client: Optional[TelegramClient] = None
         self._is_running: bool = False
         self._retry_count: int = 0
         self._shutdown_event = asyncio.Event()
+
+    @staticmethod
+    def _resolve_session_path(session_str: str, data_dir: str) -> str:
+        import os
+        if not session_str:
+            session_str = "paper_trading_session"
+        if len(session_str) > 100 or os.path.isabs(session_str):
+            return session_str
+        os.makedirs(data_dir, exist_ok=True)
+        return os.path.normpath(os.path.join(data_dir, session_str))
 
     @property
     def is_configured(self) -> bool:
@@ -51,12 +64,14 @@ class TelegramListenerService:
 
     def get_status(self) -> dict:
         """Returns a safe, masked connection status dictionary."""
+        import os
+        display_session = os.path.basename(self.session_name) if len(self.session_name) <= 100 else mask_credential(self.session_name)
         return {
             "configured": self.is_configured,
             "mock_mode": self.mock_mode,
             "api_id": mask_credential(self.api_id),
             "api_hash": mask_credential(self.api_hash),
-            "session": self.session_name,
+            "session": display_session,
             "source_chat_id": self.source_chat_id or "[ALL_INCOMING]",
             "phone": mask_credential(self.phone),
             "is_running": self._is_running,
@@ -95,7 +110,7 @@ class TelegramListenerService:
         while self._is_running and not self._shutdown_event.is_set():
             try:
                 self.client = TelegramClient(
-                    self.session_name,
+                    self.session_path,
                     self.api_id,
                     self.api_hash
                 )

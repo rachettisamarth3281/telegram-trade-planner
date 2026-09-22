@@ -35,6 +35,8 @@ htmlcov/
 *.sqlite3
 fx_platform.db
 trading.db
+data/
+backend/data/
 
 # Frontend build & dependencies
 node_modules/
