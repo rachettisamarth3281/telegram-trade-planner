@@ -1,0 +1,62 @@
+# Environment variables & secrets
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.cert
+credentials.json
+secrets.json
+
+# Telegram session files & credentials
+*.session
+*.session-journal
+telegram_session*
+
+# Python virtual environment & cache
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+
+# Database files & local SQLite storage
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+fx_platform.db
+trading.db
+
+# Frontend build & dependencies
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+build/
+.vite/
+frontend/.vite/
+
+# Logs & temporary files
+*.log
+logs/
+tmp/
+temp/
+.temp/
+
+# OS and IDE metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+.mypy_cache/
+.ruff_cache/
